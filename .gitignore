@@ -21,6 +21,7 @@ sdist/
 var/
 venv/
 .idea/
+config.ini
 wheels/
 pip-wheel-metadata/
 share/python-wheels/
