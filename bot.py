@@ -6,42 +6,58 @@ file = 'config.ini'
 config = ConfigParser()
 config.read(file)
 
-
 TOKEN = config['botdata']['token']
-bot = telebot.TeleBot(TOKEN)
 
-status_for_reply = True
+bot = telebot.TeleBot(TOKEN)
+list_of_chatids_not_replying_to = []
+
 last_found_synonym = None
+
+
+def get_synonyms_string():
+    synonyms_file = open("synonyms.txt", "rt")
+    synonyms_list = synonyms_file.read()
+    synonyms_file.close()
+    return synonyms_list
+
+
+def status_for_reply(msg):
+    global list_of_chatids_not_replying_to
+    if str(msg.chat.id) in list_of_chatids_not_replying_to:
+        return False
+    else:
+        return True
 
 
 @bot.message_handler(commands=['saufi_start'])  # start message handler
 def send_start(message):
-    global status_for_reply
-    status_for_reply = True
+    global list_of_chatids_not_replying_to
+    if str(message.chat.id) in list_of_chatids_not_replying_to:
+        list_of_chatids_not_replying_to.remove(str(message.chat.id))
     bot.reply_to(message, 'Saufi Bot has started. 🙃🍾')
 
 
 @bot.message_handler(commands=['saufi_stop'])  # stop message handler
 def send_stop(message):
-    global status_for_reply
-    status_for_reply = False
+    global list_of_chatids_not_replying_to
+    if str(message.chat.id) not in list_of_chatids_not_replying_to:
+        list_of_chatids_not_replying_to.append(str(message.chat.id))
     bot.reply_to(message, 'Saufi Bot has stopped. 🥺')
 
 
 @bot.message_handler(commands=['saufi_status'])  # status message handler
 def send_status(message):
-    bot.reply_to(message, status())
+    bot.reply_to(message, status_msg(message))
 
 
 @bot.message_handler(commands=['saufi_synonyms'])  # synonym message handler
 def send_synonyms(message):
-    synonym_list = config['synonyms_for_drinking']['synonyms']
-    bot.reply_to(message, "A list of drinking synonyms:\n" + synonym_list)
+    synonyms_string = get_synonyms_string()
+    bot.reply_to(message, "A list of drinking synonyms:\n" + synonyms_string)
 
 
-def status():
-    global status_for_reply
-    if status_for_reply is True:
+def status_msg(message):
+    if status_for_reply(message) is True:
         return "Saufi Bot is currently running. 🍻"
     else:
         return "Saufi Bot is drinking alone. 🥺😢"
@@ -58,7 +74,7 @@ def send_help(message):
 
 
 @bot.message_handler(func=lambda msg: msg.text is not None and lower_message_contains_word(msg, 'sauf') is True
-                                      and status_for_reply)
+                                      and status_for_reply(msg))
 # lambda function checks if the message is not null and if 'sauf' is contained.
 # in case msg.text doesn't exist, the handler doesn't process it
 def replymessage_to_sauf(message):
@@ -75,7 +91,7 @@ def lower_message_contains_word(msg, word):
 
 
 @bot.message_handler(func=lambda msg: msg.text is not None and lower_message_contains_word_in_list(msg) is True
-                                      and status_for_reply)
+                                      and status_for_reply(msg) is True)
 # lambda function checks if the message is not null and if a synonym for drinking is in the list of synonyms contained
 # in the message
 # in case msg.text doesn't exist, the handler doesn't process it
@@ -88,15 +104,18 @@ def replymessage_to_synonym(message):
 def lower_message_contains_word_in_list(msg):
     # check if a word in lowercase is contained in the message.
     text = msg.text.lower()
-    synonym_list = config['synonyms_for_drinking']['synonyms']
-    synonym_list = synonym_list.lower()
-    synonym_list = synonym_list.split('\n')
+    synonyms_string = get_synonyms_string()
+    synonyms_list = synonyms_string.split('\n')
+    synonyms_string_lower = synonyms_string.lower()
+    synonyms_list_lower = synonyms_string_lower.split('\n')
     global last_found_synonym
-    for i in synonym_list:
-        if i in text:
-            last_found_synonym = i
-            return True
     last_found_synonym = None
+    j = 0
+    for i in synonyms_list_lower:
+        if str(i) in str(text) and i != '' and i != ' ':
+            last_found_synonym = synonyms_list[int(j)]
+            return True
+        j = j + 1
     return False
 
 
