@@ -1,3 +1,5 @@
+import codecs
+
 import telebot
 import time
 from configparser import ConfigParser
@@ -15,7 +17,8 @@ last_found_synonym = None
 
 
 def get_synonyms_string():
-    synonyms_file = open("synonyms.txt", "rt")
+    # synonyms_file = codecs.open("synonyms.txt", "rt")
+    synonyms_file = codecs.open("synonyms.txt", "r", "utf-8")
     synonyms_list = synonyms_file.read()
     synonyms_file.close()
     return synonyms_list
@@ -73,21 +76,24 @@ def send_help(message):
                           '/saufi_synonyms: A list of all drinking synonyms.')
 
 
-@bot.message_handler(func=lambda msg: msg.text is not None and lower_message_contains_word(msg, 'sauf') is True
-                                      and status_for_reply(msg))
+@bot.message_handler(func=lambda msg: msg.text is not None and status_for_reply(msg)
+                                      and lower_message_contains_word_for_saufi(msg))
 # lambda function checks if the message is not null and if 'sauf' is contained.
 # in case msg.text doesn't exist, the handler doesn't process it
 def replymessage_to_sauf(message):
     bot.reply_to(message, "Did I hear SAUFI ❤️")
+    # bot.send_sticker("AgADGgAD7PxSCA")
 
 
-def lower_message_contains_word(msg, word):
+def lower_message_contains_word_for_saufi(msg):
     # check if a word in lowercase is contained in the message.
+    list_of_saufi_words = config['saufi_words']['synonyms_for_saufi']
+    list_of_saufi_words = list_of_saufi_words.lower().split('\n')
     text = msg.text.lower()
-    if word in text:
-        return True
-    else:
-        return False
+    for i in list_of_saufi_words:
+        if i in text and i != '' and i != ' ':
+            return True
+    return False
 
 
 @bot.message_handler(func=lambda msg: msg.text is not None and lower_message_contains_word_in_list(msg) is True
@@ -108,14 +114,19 @@ def lower_message_contains_word_in_list(msg):
     synonyms_list = synonyms_string.split('\n')
     synonyms_string_lower = synonyms_string.lower()
     synonyms_list_lower = synonyms_string_lower.split('\n')
+    counter = 0
+    for i in synonyms_list_lower:
+        synonyms_list_lower[counter] = i.strip()
+        counter = counter + 1
+
     global last_found_synonym
     last_found_synonym = None
-    j = 0
+    counter = 0
     for i in synonyms_list_lower:
-        if str(i) in str(text) and i != '' and i != ' ':
-            last_found_synonym = synonyms_list[int(j)]
+        if i in text and i != '' and i != ' ':
+            last_found_synonym = synonyms_list[int(counter)]
             return True
-        j = j + 1
+        counter = counter + 1
     return False
 
 
