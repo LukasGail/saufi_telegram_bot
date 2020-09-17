@@ -32,6 +32,34 @@ def status_for_reply(msg):
         return True
 
 
+def is_synonym_present_in_list(synonym):
+    syn_string = get_synonyms_string()
+    syn_list = syn_string.split('\n')
+    syn_list_lower = syn_string.lower().split('\n')
+    counter = 0
+    for i in syn_list_lower:
+        list_element_trimed = i.strip()
+        if list_element_trimed in synonym.lower() and i != '' and i != ' ':
+            return syn_list[counter].strip()
+        counter = counter + 1
+    return None
+
+
+def add_synonym_to_list(synonym_to_add):
+    synonyms_file = codecs.open("synonyms.txt", "a", "utf-8")
+    synonyms_file.write("\n"+synonym_to_add)
+    synonyms_file.close()
+
+
+def del_synonym_from_list(synonym_to_delete):
+    with open("synonyms.txt", "r") as f:
+        lines = f.readlines()
+    with open("synonyms.txt", "w") as f:
+        for line in lines:
+            if line.strip("\n") != synonym_to_delete:
+                f.write(line)
+
+
 @bot.message_handler(commands=['saufi_start'])  # start message handler
 def send_start(message):
     global list_of_chatids_not_replying_to
@@ -51,6 +79,41 @@ def send_stop(message):
 @bot.message_handler(commands=['saufi_status'])  # status message handler
 def send_status(message):
     bot.reply_to(message, status_msg(message))
+
+
+@bot.message_handler(commands=['saufi_add'])  # add synonym message handler
+def add_synonym(message):
+    synonym_to_add = message.text[11:]
+    synonym_to_add = synonym_to_add.replace('\n', ' ').replace('\r', '')
+    if len(synonym_to_add) > 60:
+        bot.reply_to(message, "Please use a synonym that is not longer than 60 characters")
+        return
+    if len(synonym_to_add) < 4:
+        bot.reply_to(message, "Please write a word behind /saufi_add <that is longer than 3 characters>")
+    else:
+        found_syn_in_list = is_synonym_present_in_list(synonym_to_add)
+        if found_syn_in_list is not None:
+            bot.reply_to(message, "\"" + found_syn_in_list + "\" was found in List as part of "
+                         + "\"" + synonym_to_add + "\".")
+        else:
+            add_synonym_to_list(synonym_to_add)
+            bot.reply_to(message, "\"" + synonym_to_add + "\" was added as synonym for drinking.")
+
+
+@bot.message_handler(commands=['saufi_del'])  # remove synonym message handler
+def remove_synonym(message):
+    synonym_to_del = message.text[11:]
+    synonym_to_del = synonym_to_del.replace('\n', ' ').replace('\r', '')
+    if len(synonym_to_del) < 1:
+        bot.reply_to(message, "Please write a synonym (/saufi_synonyms) behind /saufi_del <synonym>")
+    else:
+        found_syn_in_list = is_synonym_present_in_list(synonym_to_del)
+        if found_syn_in_list is not None:
+            del_synonym_from_list(found_syn_in_list)
+            bot.reply_to(message, "\"" + found_syn_in_list + "\" was found and deleted. ")
+        else:
+            bot.reply_to(message, "\"" + synonym_to_del + "\" was not found as synonym for drinking.\n"
+                                                          "Try /saufi_synonyms for a list of synonyms")
 
 
 @bot.message_handler(commands=['saufi_synonyms'])  # synonym message handler
@@ -73,6 +136,8 @@ def send_help(message):
                           '/saufi_start: Starts answering.\n '
                           '/saufi_stop: Stops answering.\n '
                           '/saufi_status: Show bot-status.\n '
+                          '/saufi_add <syn>: Add synonym to list.\n '
+                          '/saufi_del <syn>: Del synonym from list.\n '
                           '/saufi_synonyms: A list of all drinking synonyms.')
 
 
