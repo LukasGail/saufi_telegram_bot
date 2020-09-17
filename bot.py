@@ -3,6 +3,8 @@ import codecs
 import telebot
 import time
 from configparser import ConfigParser
+import pathlib
+import random
 
 file = 'config.ini'
 config = ConfigParser()
@@ -146,8 +148,11 @@ def send_help(message):
 # lambda function checks if the message is not null and if 'sauf' is contained.
 # in case msg.text doesn't exist, the handler doesn't process it
 def replymessage_to_sauf(message):
-    bot.reply_to(message, "Did I hear SAUFI ❤️")
-    # bot.send_sticker("AgADGgAD7PxSCA")
+    bot.reply_to(message, "Did I hear SAUFI? 🍻❤️")
+    path = str(pathlib.Path().absolute())
+    path = path+'/sticker/sticker{}.webp'.replace('\\', '/').format(random.randint(1, 6))
+    sticker = open(path, 'rb')
+    bot.send_sticker(message.chat.id, sticker)
 
 
 def lower_message_contains_word_for_saufi(msg):
@@ -198,7 +203,7 @@ def lower_message_contains_word_in_list(msg):
 while True:
     try:
         bot.polling(True)
-        time.sleep(1)
+        time.sleep(1.5)
         # ConnectionError and ReadTimeout because of possible timout of the requests library
         # maybe there are others, therefore Exception
     except Exception:
