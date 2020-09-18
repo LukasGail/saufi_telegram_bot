@@ -58,7 +58,7 @@ def del_synonym_from_list(synonym_to_delete):
         lines = f.readlines()
     with open("synonyms.txt", "w") as f:
         for line in lines:
-            if line.strip("\n") != synonym_to_delete:
+            if line.strip("\n") != synonym_to_delete and line.strip("\n").strip() != '':
                 f.write(line)
 
 
@@ -86,7 +86,7 @@ def send_status(message):
 @bot.message_handler(commands=['saufi_add'])  # add synonym message handler
 def add_synonym(message):
     synonym_to_add = message.text[11:]
-    synonym_to_add = synonym_to_add.replace('\n', ' ').replace('\r', '')
+    synonym_to_add = synonym_to_add.replace('\n', ' ').replace('\r', '').strip()
     if len(synonym_to_add) > 60:
         bot.reply_to(message, "Please use a synonym that is not longer than 60 characters")
         return
@@ -203,8 +203,8 @@ def lower_message_contains_word_in_list(msg):
 while True:
     try:
         bot.polling(True)
-        time.sleep(1.5)
+        # time.sleep(1.5)
         # ConnectionError and ReadTimeout because of possible timout of the requests library
         # maybe there are others, therefore Exception
     except Exception:
-        time.sleep(15)
+        time.sleep(10)
