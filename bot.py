@@ -19,7 +19,6 @@ last_found_synonym = None
 
 
 def get_synonyms_string():
-    # synonyms_file = codecs.open("synonyms.txt", "rt")
     synonyms_file = codecs.open("synonyms.txt", "r", "utf-8")
     synonyms_list = synonyms_file.read()
     synonyms_file.close()
@@ -85,8 +84,10 @@ def send_status(message):
 
 @bot.message_handler(commands=['saufi_add'])  # add synonym message handler
 def add_synonym(message):
-    synonym_to_add = message.text[11:]
-    synonym_to_add = synonym_to_add.replace('\n', ' ').replace('\r', '').strip()
+    synonym_to_add = message.text
+    synonym_to_add = \
+        synonym_to_add.replace('\n', ' ').replace('\r', '').replace('@did_i_hear_saufi_bot', '')[11:].strip()
+    synonym_to_add = synonym_to_add.replace('/', '')
     if len(synonym_to_add) > 60:
         bot.reply_to(message, "Please use a synonym that is not longer than 60 characters")
         return
@@ -104,8 +105,9 @@ def add_synonym(message):
 
 @bot.message_handler(commands=['saufi_del'])  # remove synonym message handler
 def remove_synonym(message):
-    synonym_to_del = message.text[11:]
-    synonym_to_del = synonym_to_del.replace('\n', ' ').replace('\r', '')
+    synonym_to_del = message.text
+    synonym_to_del = \
+        synonym_to_del.replace('\n', ' ').replace('\r', '').replace('@did_i_hear_saufi_bot', '')[11:].strip()
     if len(synonym_to_del) < 1:
         bot.reply_to(message, "Please write a synonym (/saufi_synonyms) behind /saufi_del <synonym>")
     else:
